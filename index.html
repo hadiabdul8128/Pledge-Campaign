@@ -389,7 +389,7 @@
       // Create a "Count" sheet with =COUNTA('Form Responses 1'!B2:B) in A1, then File → Share → Publish to web
       publishedSheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSq81edVTmjO488uzhZe25j8VMRHdWPCZhinNj-P_6QIOaWw4bVPJiNEe1865cQrwEVOnQYJZfQnbiA/pub?gid=745699792&single=true&output=csv',
       // Fallback: manual count (used when both above are empty or fetch fails)
-      manualCount: 12,
+      manualCount: 13,
       // Class size for percentage calculation
       totalClassSize: 360,
       // Milestones
@@ -484,14 +484,23 @@
       }
       // Try published sheet (no Apps Script - works with school accounts!)
       if (CONFIG.publishedSheetUrl) {
-        try {
-          const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(CONFIG.publishedSheetUrl);
-          const res = await fetch(proxyUrl);
-          const csv = await res.text();
-          const count = parseInt(csv.trim().split('\n')[0].trim(), 10);
-          if (!isNaN(count)) return count;
-        } catch (e) {
-          console.warn('Could not fetch from published sheet:', e);
+        const proxies = [
+          (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+          (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
+          (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url)
+        ];
+        for (const proxy of proxies) {
+          try {
+            const res = await Promise.race([
+              fetch(proxy(CONFIG.publishedSheetUrl)),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+            ]);
+            const csv = await res.text();
+            const count = parseInt(csv.trim().split('\n')[0].trim(), 10);
+            if (!isNaN(count)) return count;
+          } catch (e) {
+            console.warn('Proxy failed, trying next:', e.message || e);
+          }
         }
       }
       return CONFIG.manualCount;
