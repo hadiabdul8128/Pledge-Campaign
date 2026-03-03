@@ -351,7 +351,7 @@
     <h1>Class of 2026 Senior Pledge</h1>
     <p class="subtitle">Join the '26 Club • Every pledge counts!</p>
 
-    <div class="pledge-count" id="pledgeCount">--</div>
+    <div class="pledge-count" id="pledgeCount">13</div>
     <p class="count-label">Unicorns have made the pledge</p>
 
     <div class="progress-wrapper">
@@ -493,7 +493,7 @@
           try {
             const res = await Promise.race([
               fetch(proxy(CONFIG.publishedSheetUrl)),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
             ]);
             const csv = await res.text();
             const count = parseInt(csv.trim().split('\n')[0].trim(), 10);
@@ -511,7 +511,8 @@
       updateDisplay(count);
     }
 
-    // Initial load
+    // Show fallback immediately so number appears instantly, then fetch live data
+    updateDisplay(CONFIG.manualCount);
     refresh();
 
     // Refresh every 2 minutes
