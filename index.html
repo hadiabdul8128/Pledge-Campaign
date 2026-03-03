@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NCSSM-Durham Class of 2026 Senior Pledge Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --unicorn-pink: #ff6b9d;
+      --unicorn-purple: #c44dff;
+      --unicorn-blue: #4d9fff;
+      --unicorn-cyan: #00e5cc;
+      --gold: #ffd93d;
+      --bg-dark: #1a0a2e;
+      --bg-card: rgba(255, 255, 255, 0.05);
+      --text: #fff;
+      --text-muted: rgba(255, 255, 255, 0.7);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-dark);
+      min-height: 100vh;
+      color: var(--text);
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(ellipse at 20% 20%, rgba(196, 77, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(77, 159, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255, 107, 157, 0.08) 0%, transparent 70%);
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(1.5rem, 5vw, 2.2rem);
+      text-align: center;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--unicorn-pink), var(--unicorn-purple), var(--unicorn-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .pledge-count {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 4rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      background: linear-gradient(135deg, var(--unicorn-cyan), var(--unicorn-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: transform 0.3s ease;
+    }
+
+    .pledge-count.bump {
+      animation: countBump 0.5s ease;
+    }
+
+    @keyframes countBump {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    .count-label {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Progress bar container */
+    .progress-wrapper {
+      width: 100%;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .progress-track {
+      height: 32px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 16px;
+      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+      min-width: 4%;
+    }
+
+    .progress-fill::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        var(--unicorn-pink) 0%,
+        var(--unicorn-purple) 25%,
+        var(--unicorn-blue) 50%,
+        var(--unicorn-cyan) 75%,
+        var(--gold) 100%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent
+      );
+      animation: shine 2s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    @keyframes shine {
+      0% { left: -100%; }
+      50%, 100% { left: 100%; }
+    }
+
+    /* Sparkle particles */
+    .sparkle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: sparkle 1.5s ease-out forwards;
+    }
+
+    @keyframes sparkle {
+      0% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0) translateY(-20px);
+      }
+    }
+
+    /* Milestone markers */
+    .milestones {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0 4px;
+    }
+
+    .milestone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      flex: 1;
+      max-width: 140px;
+    }
+
+    .milestone-marker {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      transition: all 0.4s ease;
+    }
+
+    .milestone.unlocked .milestone-marker {
+      box-shadow: 0 0 20px rgba(255, 217, 61, 0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .milestone.milestone-1 .milestone-marker {
+      background: linear-gradient(135deg, #ff9a56, #ff6b9d);
+    }
+
+    .milestone.milestone-2 .milestone-marker {
+      background: linear-gradient(135deg, #ffd93d, #ff9a56);
+    }
+
+    .milestone.locked .milestone-marker {
+      background: rgba(255, 255, 255, 0.2);
+      opacity: 0.6;
+    }
+
+    .milestone-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    .milestone.unlocked .milestone-label {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* CTA */
+    .cta {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .cta a {
+      display: inline-block;
+      padding: 0.9rem 2rem;
+      background: linear-gradient(135deg, var(--unicorn-pink), var(--unicorn-purple));
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(255, 107, 157, 0.4);
+    }
+
+    .cta a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(255, 107, 157, 0.5);
+    }
+
+    /* Confetti container */
+    #confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+      overflow: hidden;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      animation: confettiFall 3s ease-out forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        opacity: 1;
+        transform: translateY(-100vh) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(100vh) rotate(720deg);
+      }
+    }
+
+    /* Loading state */
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: ''; }
+      40% { content: '.'; }
+      60% { content: '..'; }
+      80%, 100% { content: '...'; }
+    }
+
+    /* Unicorn emoji decoration */
+    .unicorn-float {
+      font-size: 2rem;
+      position: absolute;
+      animation: float 4s ease-in-out infinite;
+      opacity: 0.6;
+    }
+
+    .unicorn-float:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
+    .unicorn-float:nth-child(2) { top: 20%; right: 8%; animation-delay: 1s; }
+    .unicorn-float:nth-child(3) { bottom: 30%; left: 10%; animation-delay: 2s; }
+    .unicorn-float:nth-child(4) { bottom: 15%; right: 5%; animation-delay: 0.5s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="unicorn-float">🦄</div>
+  <div class="unicorn-float">🦄</div>
+  <div class="unicorn-float">🦄</div>
+  <div class="unicorn-float">🦄</div>
+
+  <div class="container">
+    <h1>Class of 2026 Senior Pledge</h1>
+    <p class="subtitle">Join the '26 Club • Every pledge counts!</p>
+
+    <div class="pledge-count" id="pledgeCount">--</div>
+    <p class="count-label">Unicorns have made the pledge</p>
+
+    <div class="progress-wrapper">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+      <div id="sparkles"></div>
+    </div>
+
+    <div class="milestones">
+      <div class="milestone milestone-1 locked" id="milestone1">
+        <div class="milestone-marker">🍦</div>
+        <span class="milestone-label">90 pledges<br>Ice Cream Social!</span>
+      </div>
+      <div class="milestone milestone-2 locked" id="milestone2">
+        <div class="milestone-marker">🎁</div>
+        <span class="milestone-label">180 pledges<br>$5,000 Challenge Gift!</span>
+      </div>
+    </div>
+
+    <div class="cta">
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdbDH6ui0qXGWQLOB2O3iLr3gJm_G0T0NqV_Pk5EHKrMdHUtA/viewform" target="_blank" rel="noopener">
+        Make Your Pledge →
+      </a>
+    </div>
+  </div>
+
+  <div id="confetti"></div>
+
+  <script>
+    const CONFIG = {
+      // Option 1: Google Apps Script URL (blocked by some school accounts - use Option 2 instead)
+      scriptUrl: '',
+      // Option 2: Published sheet URL - no Apps Script needed! See README for setup.
+      // Create a "Count" sheet with =COUNTA('Form Responses 1'!B2:B) in A1, then File → Share → Publish to web
+      publishedSheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSq81edVTmjO488uzhZe25j8VMRHdWPCZhinNj-P_6QIOaWw4bVPJiNEe1865cQrwEVOnQYJZfQnbiA/pub?gid=745699792&single=true&output=csv',
+      // Fallback: manual count (used when both above are empty or fetch fails)
+      manualCount: 12,
+      // Class size for percentage calculation
+      totalClassSize: 360,
+      // Milestones
+      milestone1: 90,
+      milestone2: 180
+    };
+
+    const progressFill = document.getElementById('progressFill');
+    const pledgeCountEl = document.getElementById('pledgeCount');
+    const milestone1El = document.getElementById('milestone1');
+    const milestone2El = document.getElementById('milestone2');
+    const sparklesContainer = document.getElementById('sparkles');
+    const confettiContainer = document.getElementById('confetti');
+
+    let lastCount = 0;
+    let milestone1Reached = false;
+    let milestone2Reached = false;
+
+    function addSparkles(count) {
+      const track = progressFill.parentElement;
+      const rect = track.getBoundingClientRect();
+      for (let i = 0; i < count; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.left = `${Math.random() * rect.width}px`;
+        sparkle.style.top = `${Math.random() * rect.height}px`;
+        sparkle.style.animationDelay = `${Math.random() * 0.5}s`;
+        sparklesContainer.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 1500);
+      }
+    }
+
+    function fireConfetti() {
+      const colors = ['#ff6b9d', '#c44dff', '#4d9fff', '#00e5cc', '#ffd93d', '#ff9a56'];
+      const pieceCount = 80;
+
+      for (let i = 0; i < pieceCount; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = `${Math.random() * 100}vw`;
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        piece.style.animationDuration = `${2 + Math.random() * 2}s`;
+        piece.style.animationDelay = `${Math.random() * 0.5}s`;
+        confettiContainer.appendChild(piece);
+        setTimeout(() => piece.remove(), 4000);
+      }
+    }
+
+    function updateDisplay(count) {
+      const percent = Math.min(100, (count / CONFIG.totalClassSize) * 100);
+      const prevPercent = (lastCount / CONFIG.totalClassSize) * 100;
+
+      // Animate count
+      pledgeCountEl.textContent = count;
+      if (count > lastCount && lastCount > 0) {
+        pledgeCountEl.classList.add('bump');
+        addSparkles(5);
+        setTimeout(() => pledgeCountEl.classList.remove('bump'), 500);
+      }
+
+      // Animate progress bar
+      progressFill.style.width = `${Math.max(4, percent)}%`;
+
+      // Check milestones
+      if (count >= CONFIG.milestone1 && !milestone1Reached) {
+        milestone1Reached = true;
+        milestone1El.classList.remove('locked');
+        milestone1El.classList.add('unlocked');
+        fireConfetti();
+      }
+      if (count >= CONFIG.milestone2 && !milestone2Reached) {
+        milestone2Reached = true;
+        milestone2El.classList.remove('locked');
+        milestone2El.classList.add('unlocked');
+        fireConfetti();
+      }
+
+      lastCount = count;
+    }
+
+    async function fetchPledgeCount() {
+      // Try Apps Script first (if not blocked by institution)
+      if (CONFIG.scriptUrl) {
+        try {
+          const res = await fetch(CONFIG.scriptUrl);
+          const data = await res.json();
+          return data.count ?? data.pledgeCount ?? CONFIG.manualCount;
+        } catch (e) {
+          console.warn('Could not fetch from script:', e);
+        }
+      }
+      // Try published sheet (no Apps Script - works with school accounts!)
+      if (CONFIG.publishedSheetUrl) {
+        try {
+          const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(CONFIG.publishedSheetUrl);
+          const res = await fetch(proxyUrl);
+          const csv = await res.text();
+          const count = parseInt(csv.trim().split('\n')[0].trim(), 10);
+          if (!isNaN(count)) return count;
+        } catch (e) {
+          console.warn('Could not fetch from published sheet:', e);
+        }
+      }
+      return CONFIG.manualCount;
+    }
+
+    async function refresh() {
+      const count = await fetchPledgeCount();
+      updateDisplay(count);
+    }
+
+    // Initial load
+    refresh();
+
+    // Refresh every 2 minutes
+    setInterval(refresh, 120000);
+  </script>
+</body>
+</html>
