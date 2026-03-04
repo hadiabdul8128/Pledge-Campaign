@@ -471,39 +471,41 @@
       lastCount = count;
     }
 
+    function fetchViaGoogleViz() {
+      return new Promise((resolve, reject) => {
+        const callbackName = '_sheetCb' + Date.now();
+        const timeout = setTimeout(() => {
+          delete window[callbackName];
+          reject(new Error('timeout'));
+        }, 4000);
+
+        window[callbackName] = (response) => {
+          clearTimeout(timeout);
+          delete window[callbackName];
+          try {
+            const val = response.table.rows[0].c[0].v;
+            const n = parseInt(val, 10);
+            if (!isNaN(n)) resolve(n);
+            else reject(new Error('bad value'));
+          } catch (e) {
+            reject(e);
+          }
+        };
+
+        const script = document.createElement('script');
+        script.src = 'https://docs.google.com/spreadsheets/d/1oBKD1EmnxxhwFaTXm4RTYydZptTD4XU90LSUjIMEAto/gviz/tq?tqx=responseHandler:' + callbackName + '&gid=745699792';
+        script.onerror = () => { clearTimeout(timeout); reject(new Error('script error')); };
+        document.body.appendChild(script);
+        script.onload = () => script.remove();
+      });
+    }
+
     async function fetchPledgeCount() {
-      // Try Apps Script first (if not blocked by institution)
-      if (CONFIG.scriptUrl) {
-        try {
-          const res = await fetch(CONFIG.scriptUrl);
-          const data = await res.json();
-          return data.count ?? data.pledgeCount ?? CONFIG.manualCount;
-        } catch (e) {
-          console.warn('Could not fetch from script:', e);
-        }
-      }
-      // Try published sheet via multiple proxies simultaneously — fastest one wins
-      if (CONFIG.publishedSheetUrl) {
-        const proxies = [
-          (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-          (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
-          (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url)
-        ];
-        try {
-          const count = await Promise.any(proxies.map(async (proxy) => {
-            const res = await Promise.race([
-              fetch(proxy(CONFIG.publishedSheetUrl)),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-            ]);
-            const csv = await res.text();
-            const n = parseInt(csv.trim().split('\n')[0].trim(), 10);
-            if (isNaN(n)) throw new Error('bad value');
-            return n;
-          }));
-          return count;
-        } catch (e) {
-          console.warn('All proxies failed:', e);
-        }
+      // Direct from Google (no CORS proxy needed — fastest)
+      try {
+        return await fetchViaGoogleViz();
+      } catch (e) {
+        console.warn('Google Viz failed:', e);
       }
       return CONFIG.manualCount;
     }
