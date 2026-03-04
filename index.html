@@ -351,7 +351,7 @@
     <h1>Class of 2026 Senior Pledge</h1>
     <p class="subtitle">Join the '26 Club • Every pledge counts!</p>
 
-    <div class="pledge-count" id="pledgeCount">13</div>
+    <div class="pledge-count" id="pledgeCount">&nbsp;</div>
     <p class="count-label">Unicorns have made the pledge</p>
 
     <div class="progress-wrapper">
@@ -482,25 +482,27 @@
           console.warn('Could not fetch from script:', e);
         }
       }
-      // Try published sheet (no Apps Script - works with school accounts!)
+      // Try published sheet via multiple proxies simultaneously — fastest one wins
       if (CONFIG.publishedSheetUrl) {
         const proxies = [
           (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
           (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
           (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url)
         ];
-        for (const proxy of proxies) {
-          try {
+        try {
+          const count = await Promise.any(proxies.map(async (proxy) => {
             const res = await Promise.race([
               fetch(proxy(CONFIG.publishedSheetUrl)),
               new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
             ]);
             const csv = await res.text();
-            const count = parseInt(csv.trim().split('\n')[0].trim(), 10);
-            if (!isNaN(count)) return count;
-          } catch (e) {
-            console.warn('Proxy failed, trying next:', e.message || e);
-          }
+            const n = parseInt(csv.trim().split('\n')[0].trim(), 10);
+            if (isNaN(n)) throw new Error('bad value');
+            return n;
+          }));
+          return count;
+        } catch (e) {
+          console.warn('All proxies failed:', e);
         }
       }
       return CONFIG.manualCount;
@@ -511,8 +513,6 @@
       updateDisplay(count);
     }
 
-    // Show fallback immediately so number appears instantly, then fetch live data
-    updateDisplay(CONFIG.manualCount);
     refresh();
 
     // Refresh every 2 minutes
