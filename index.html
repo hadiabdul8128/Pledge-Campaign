@@ -285,12 +285,14 @@
     .color-bryan .hall-bar-fill { background: linear-gradient(90deg, #c44dff, #ff6b9d); }
     .color-beall .hall-bar-fill { background: linear-gradient(90deg, #ffd93d, #ff6b9d); }
     .color-mod .hall-bar-fill { background: linear-gradient(90deg, #00e5cc, #4dff88); }
+    .color-royal .hall-bar-fill { background: linear-gradient(90deg, #ffd93d, #c44dff); }
 
     .color-hill .hall-count { color: #ff6b9d; }
     .color-hunt .hall-count { color: #4d9fff; }
     .color-bryan .hall-count { color: #c44dff; }
     .color-beall .hall-count { color: #ffd93d; }
     .color-mod .hall-count { color: #00e5cc; }
+    .color-royal .hall-count { color: #ffd93d; }
 
     .crown { position: absolute; top: -2px; right: 12px; font-size: 1.5rem; animation: crownBounce 2s ease-in-out infinite; }
     @keyframes crownBounce { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-4px) rotate(5deg); } }
@@ -372,12 +374,10 @@
   <script>
     // ---- Shared Config ----
     const SPREADSHEET_ID = '1oBKD1EmnxxhwFaTXm4RTYydZptTD4XU90LSUjIMEAto';
-    const COUNT_GID = '745699792';
     const RESPONSES_GID = '0';
     const TOTAL_CLASS_SIZE = 360;
     const MILESTONE_1 = 90;
     const MILESTONE_2 = 180;
-    const MANUAL_COUNT = 14;
 
     // ---- Tab Switching ----
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -468,23 +468,31 @@
 
     // ===== HALL COMPETITION =====
     const HALL_CONFIG = {
-      'Hill':  { emoji: '🏔️', colorClass: 'color-hill' },
-      'Hunt':  { emoji: '🦊', colorClass: 'color-hunt' },
-      'Bryan': { emoji: '⚡', colorClass: 'color-bryan' },
-      'Beall': { emoji: '🐝', colorClass: 'color-beall' },
-      'Mod':   { emoji: '🏠', colorClass: 'color-mod' }
+      'Hill':   { emoji: '🏔️', colorClass: 'color-hill' },
+      'Hunt':   { emoji: '🦊', colorClass: 'color-hunt' },
+      'Bryan':  { emoji: '⚡', colorClass: 'color-bryan' },
+      'Beall':  { emoji: '🐝', colorClass: 'color-beall' },
+      'Mod':    { emoji: '🏠', colorClass: 'color-mod' },
+      'Royal':  { emoji: '👑', colorClass: 'color-royal' }
     };
 
     function parseHall(s) {
       if (!s) return 'Other';
       s = s.toLowerCase().trim();
+
+      // Exact hall name matches
       if (s.includes('hill')) return 'Hill';
       if (s.includes('hunt')) return 'Hunt';
       if (s.includes('bryan')) return 'Bryan';
       if (s.includes('beall')) return 'Beall';
       if (s.includes('mod')) return 'Mod';
-      if (/\b(1st|2nd|3rd|4th|first|second|third|fourth)\s*(west|east)?\b/.test(s)) return 'Hunt';
-      if (/\b[1-4](w|e)\b/.test(s)) return 'Hunt';
+      if (s.includes('royal')) return 'Royal';
+
+      // Hunt floors: "1st Hunt", "2nd East", "2nd West", "3rd East", "3rd West", "4th East", "4th West"
+      if (/\b(east|west)\b/.test(s)) return 'Hunt';
+      if (/\b(1st|2nd|3rd|4th|first|second|third|fourth)\s*(east|west|hunt)\b/.test(s)) return 'Hunt';
+      if (/\b[1-4]\s*(w|e)\b/.test(s)) return 'Hunt';
+
       return 'Other';
     }
 
@@ -533,42 +541,33 @@
       updatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString()} • Refreshes every 2 min`;
     }
 
-    // ===== DATA FETCHING =====
+    // ===== DATA FETCHING (single source of truth: Form Responses) =====
     async function refreshAll() {
-      // Fetch pledge count from the Count sheet
       try {
-        const count = await fetchGoogleViz(COUNT_GID, (r) => {
-          const v = r.table.rows[0].c[0].v;
-          const n = parseInt(v, 10);
-          if (isNaN(n)) throw new Error('bad value');
-          return n;
-        });
-        updatePledgeDisplay(count);
-      } catch (e) {
-        console.warn('Count fetch failed:', e);
-        updatePledgeDisplay(MANUAL_COUNT);
-      }
-
-      // Fetch hall data from Form Responses
-      try {
-        const hallCounts = await fetchGoogleViz(RESPONSES_GID, (response) => {
+        const result = await fetchGoogleViz(RESPONSES_GID, (response) => {
           const rows = response.table.rows;
-          const counts = {};
-          Object.keys(HALL_CONFIG).forEach(h => counts[h] = 0);
-          counts['Other'] = 0;
+          const hallCounts = {};
+          Object.keys(HALL_CONFIG).forEach(h => hallCounts[h] = 0);
+          hallCounts['Other'] = 0;
+          let totalPledges = 0;
+
           for (let i = 0; i < rows.length; i++) {
             const cells = rows[i].c;
             const firstName = cells[1] ? cells[1].v : null;
-            const dormRoom = cells[6] ? cells[6].v : null;
             if (!firstName || String(firstName).trim() === '') continue;
-            const hall = parseHall(dormRoom ? String(dormRoom) : '');
-            counts[hall] = (counts[hall] || 0) + 1;
+            totalPledges++;
+            const dormRoom = cells[6] ? String(cells[6].v) : '';
+            const hall = parseHall(dormRoom);
+            hallCounts[hall] = (hallCounts[hall] || 0) + 1;
           }
-          return counts;
+
+          return { totalPledges, hallCounts };
         });
-        renderLeaderboard(hallCounts);
+
+        updatePledgeDisplay(result.totalPledges);
+        renderLeaderboard(result.hallCounts);
       } catch (e) {
-        console.warn('Hall fetch failed:', e);
+        console.warn('Data fetch failed:', e);
       }
     }
 
