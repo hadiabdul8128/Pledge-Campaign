@@ -550,11 +550,12 @@
       return null;
     }
 
-    function renderLeaderboard(hallCounts, totalPledges) {
+    function renderLeaderboard(hallCounts, totalPledges, unmatched) {
       const leaderboardEl = document.getElementById('leaderboard');
       const totalEl = document.getElementById('totalCount');
       const updatedEl = document.getElementById('updatedAt');
 
+      // Ranked halls (only those with pledges), sorted by count
       let halls = Object.entries(hallCounts)
         .filter(([, count]) => count > 0)
         .sort((a, b) => b[1] - a[1]);
@@ -589,6 +590,23 @@
             </div>
           </div>`;
       });
+
+      // Add "Other" at the bottom if there are unmatched entries
+      if (unmatched > 0) {
+        html += `
+          <div class="hall-card" style="opacity: 0.6;">
+            <div class="hall-header">
+              <div class="hall-left">
+                <div class="rank rank-other">-</div>
+                <div><div class="hall-name"><span class="hall-emoji">🏢</span> Other</div></div>
+              </div>
+              <div class="hall-right">
+                <div class="hall-count" style="color: var(--text-muted);">${unmatched}</div>
+                <div class="hall-count-label">pledges</div>
+              </div>
+            </div>
+          </div>`;
+      }
 
       leaderboardEl.innerHTML = html;
       updatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString()} • Refreshes every 2 min`;
@@ -644,7 +662,7 @@
         });
 
         updatePledgeDisplay(result.totalPledges);
-        renderLeaderboard(result.hallCounts, result.totalPledges);
+        renderLeaderboard(result.hallCounts, result.totalPledges, result.unmatched);
       } catch (e) {
         console.warn('Data fetch failed:', e);
       }
