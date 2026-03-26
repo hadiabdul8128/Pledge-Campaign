@@ -489,60 +489,79 @@
       'Royal':     { emoji: '👑', colorClass: 'color-royal' }
     };
 
-    // Normalize free-text dorm entries to one of the 18 hall names
+    // Normalize dorm entries to one of the 18 hall names
     function parseHall(s) {
-      if (!s) return 'Other';
+      if (!s) return null;
       const raw = s.trim();
+      if (!raw) return null;
+      const lo = raw.toLowerCase();
 
-      // Direct match against known hall names (case-insensitive)
+      // 1) Exact match against known hall names
       for (const hallName of Object.keys(HALL_CONFIG)) {
-        if (raw.toLowerCase() === hallName.toLowerCase()) return hallName;
+        if (lo === hallName.toLowerCase()) return hallName;
       }
 
-      // Fuzzy matching for older free-text entries
-      const lo = raw.toLowerCase();
-      if (lo.includes('royal')) return 'Royal';
-      if (lo.includes('mod') && lo.includes('2')) return 'Mod 2';
-      if (lo.includes('mod') && lo.includes('1')) return 'Mod 1';
-      if (lo.includes('mod')) return 'Mod 1';
-      if (lo.includes('1st hill') || (lo.includes('hill') && lo.includes('1'))) return '1st Hill';
-      if (lo.includes('2nd hill') || (lo.includes('hill') && lo.includes('2'))) return '2nd Hill';
-      if (lo.includes('hill')) return '1st Hill';
-      if (lo.includes('1st beall') || (lo.includes('beall') && lo.includes('1'))) return '1st Beall';
-      if (lo.includes('2nd beall') || (lo.includes('beall') && lo.includes('2'))) return '2nd Beall';
-      if (lo.includes('3rd beall') || (lo.includes('beall') && lo.includes('3'))) return '3rd Beall';
-      if (lo.includes('beall')) return '1st Beall';
-      if (lo.includes('2nd bryan') || (lo.includes('bryan') && lo.includes('2'))) return '2nd Bryan';
-      if (lo.includes('3rd bryan') || (lo.includes('bryan') && lo.includes('3'))) return '3rd Bryan';
-      if (lo.includes('4th bryan') || (lo.includes('bryan') && lo.includes('4'))) return '4th Bryan';
-      if (lo.includes('bryan')) return '2nd Bryan';
-      if (lo.includes('1st hunt')) return '1st Hunt';
-      if (lo.includes('hunt')) return '1st Hunt';
-      if (lo.includes('4th west') || lo.includes('4th w') || lo.includes('4w')) return '4th West';
-      if (lo.includes('4th east') || lo.includes('4th e') || lo.includes('4e')) return '4th East';
-      if (lo.includes('3rd west') || lo.includes('3rd w') || lo.includes('3w')) return '3rd West';
-      if (lo.includes('3rd east') || lo.includes('3rd e') || lo.includes('3e')) return '3rd East';
-      if (lo.includes('2nd west') || lo.includes('2nd w') || lo.includes('2w')) return '2nd West';
-      if (lo.includes('2nd east') || lo.includes('2nd e') || lo.includes('2e')) return '2nd East';
-      if (/\b(east|west)\b/.test(lo)) return '2nd East';
-      if (/fourth\s*west/.test(lo)) return '4th West';
+      // 2) Check specific floor/wing patterns FIRST (before general hall names)
+      if (/4th\s*west|fourth\s*west|4\s*w/.test(lo)) return '4th West';
+      if (/4th\s*east|fourth\s*east|4\s*e/.test(lo)) return '4th East';
+      if (/3rd\s*west|third\s*west|3\s*w/.test(lo)) return '3rd West';
+      if (/3rd\s*east|third\s*east|3\s*e/.test(lo)) return '3rd East';
+      if (/2nd\s*west|second\s*west|2\s*w/.test(lo)) return '2nd West';
+      if (/2nd\s*east|second\s*east|2\s*e/.test(lo)) return '2nd East';
 
-      return 'Other';
+      // 3) Royal
+      if (lo.includes('royal')) return 'Royal';
+
+      // 4) Mod
+      if (lo.includes('mod') || lo.includes('modular')) {
+        if (lo.includes('2')) return 'Mod 2';
+        return 'Mod 1';
+      }
+
+      // 5) Hill (check floor number from room: 1xx = 1st, 2xx = 2nd)
+      if (lo.includes('hill')) {
+        if (lo.includes('2nd') || /\b2\d{2}\b/.test(lo)) return '2nd Hill';
+        return '1st Hill';
+      }
+
+      // 6) Beall
+      if (lo.includes('beall')) {
+        if (lo.includes('3rd') || lo.includes('3')) return '3rd Beall';
+        if (lo.includes('2nd') || lo.includes('2')) return '2nd Beall';
+        return '1st Beall';
+      }
+
+      // 7) Bryan (room: 2xx=2nd, 3xx=3rd, 4xx=4th)
+      if (lo.includes('bryan')) {
+        if (lo.includes('4th') || /\b4\d{2}\b/.test(lo)) return '4th Bryan';
+        if (lo.includes('3rd') || /\b3\d{2}\b/.test(lo)) return '3rd Bryan';
+        return '2nd Bryan';
+      }
+
+      // 8) Hunt
+      if (lo.includes('hunt') || lo.includes('1st hunt')) return '1st Hunt';
+
+      // 9) Generic east/west without number
+      if (/east/.test(lo)) return '2nd East';
+      if (/west/.test(lo)) return '2nd West';
+
+      // 10) Room-number-only: try to infer floor from first digit
+      // Can't determine building, so return null
+      return null;
     }
 
-    function renderLeaderboard(hallCounts) {
+    function renderLeaderboard(hallCounts, totalPledges) {
       const leaderboardEl = document.getElementById('leaderboard');
       const totalEl = document.getElementById('totalCount');
       const updatedEl = document.getElementById('updatedAt');
 
       let halls = Object.entries(hallCounts)
-        .filter(([name]) => name !== 'Other')
+        .filter(([, count]) => count > 0)
         .sort((a, b) => b[1] - a[1]);
 
-      const total = halls.reduce((sum, [, c]) => sum + c, 0);
       const maxCount = halls.length > 0 ? halls[0][1] : 1;
 
-      totalEl.textContent = total;
+      totalEl.textContent = totalPledges;
 
       let html = '';
       halls.forEach(([name, count], i) => {
@@ -582,17 +601,25 @@
           const cols = response.table.cols;
           const rows = response.table.rows;
 
-          // Find column indices by header label (handles column reordering)
-          let nameIdx = 1, dormIdx = 6;
+          // Find column indices by header label
+          let nameIdx = -1, dormIdx = -1;
           for (let i = 0; i < cols.length; i++) {
             const label = (cols[i].label || '').toLowerCase();
             if (label.includes('first name')) nameIdx = i;
-            if (label.includes('dorm') || label.includes('hall')) dormIdx = i;
+            if (label.includes('dorm') || label.includes('room') || label.includes('hall')) dormIdx = i;
           }
+          // Fallback to default positions if headers not found
+          if (nameIdx === -1) nameIdx = 1;
+          if (dormIdx === -1) dormIdx = 6;
+
+          // Log for debugging (visible in browser console)
+          console.log('Columns:', cols.map((c,i) => `${i}: "${c.label}"`).join(', '));
+          console.log('Using nameIdx:', nameIdx, 'dormIdx:', dormIdx);
 
           const hallCounts = {};
           Object.keys(HALL_CONFIG).forEach(h => hallCounts[h] = 0);
           let totalPledges = 0;
+          let unmatchedEntries = [];
 
           for (let i = 0; i < rows.length; i++) {
             const cells = rows[i].c;
@@ -601,18 +628,23 @@
             totalPledges++;
             const dormRoom = cells[dormIdx] ? String(cells[dormIdx].v) : '';
             const hall = parseHall(dormRoom);
-            if (hall in hallCounts) {
+            if (hall && hall in hallCounts) {
               hallCounts[hall]++;
             } else {
-              hallCounts[hall] = (hallCounts[hall] || 0) + 1;
+              unmatchedEntries.push(dormRoom || '(empty)');
             }
           }
 
-          return { totalPledges, hallCounts };
+          // Spread unmatched evenly is wrong — just log them
+          if (unmatchedEntries.length > 0) {
+            console.log('Unmatched dorm entries:', unmatchedEntries);
+          }
+
+          return { totalPledges, hallCounts, unmatched: unmatchedEntries.length };
         });
 
         updatePledgeDisplay(result.totalPledges);
-        renderLeaderboard(result.hallCounts);
+        renderLeaderboard(result.hallCounts, result.totalPledges);
       } catch (e) {
         console.warn('Data fetch failed:', e);
       }
