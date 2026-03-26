@@ -536,7 +536,7 @@
       const updatedEl = document.getElementById('updatedAt');
 
       let halls = Object.entries(hallCounts)
-        .filter(([name, count]) => name !== 'Other' || count > 0)
+        .filter(([name]) => name !== 'Other')
         .sort((a, b) => b[1] - a[1]);
 
       const total = halls.reduce((sum, [, c]) => sum + c, 0);
@@ -579,17 +579,27 @@
     async function refreshAll() {
       try {
         const result = await fetchGoogleViz(RESPONSES_GID, (response) => {
+          const cols = response.table.cols;
           const rows = response.table.rows;
+
+          // Find column indices by header label (handles column reordering)
+          let nameIdx = 1, dormIdx = 6;
+          for (let i = 0; i < cols.length; i++) {
+            const label = (cols[i].label || '').toLowerCase();
+            if (label.includes('first name')) nameIdx = i;
+            if (label.includes('dorm') || label.includes('hall')) dormIdx = i;
+          }
+
           const hallCounts = {};
           Object.keys(HALL_CONFIG).forEach(h => hallCounts[h] = 0);
           let totalPledges = 0;
 
           for (let i = 0; i < rows.length; i++) {
             const cells = rows[i].c;
-            const firstName = cells[1] ? cells[1].v : null;
+            const firstName = cells[nameIdx] ? cells[nameIdx].v : null;
             if (!firstName || String(firstName).trim() === '') continue;
             totalPledges++;
-            const dormRoom = cells[6] ? String(cells[6].v) : '';
+            const dormRoom = cells[dormIdx] ? String(cells[dormIdx].v) : '';
             const hall = parseHall(dormRoom);
             if (hall in hallCounts) {
               hallCounts[hall]++;
