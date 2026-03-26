@@ -467,31 +467,65 @@
     }
 
     // ===== HALL COMPETITION =====
+    // All 18 halls/floors from the form dropdown
     const HALL_CONFIG = {
-      'Hill':   { emoji: '🏔️', colorClass: 'color-hill' },
-      'Hunt':   { emoji: '🦊', colorClass: 'color-hunt' },
-      'Bryan':  { emoji: '⚡', colorClass: 'color-bryan' },
-      'Beall':  { emoji: '🐝', colorClass: 'color-beall' },
-      'Mod':    { emoji: '🏠', colorClass: 'color-mod' },
-      'Royal':  { emoji: '👑', colorClass: 'color-royal' }
+      '1st Hill':  { emoji: '🏔️', colorClass: 'color-hill' },
+      '2nd Hill':  { emoji: '🏔️', colorClass: 'color-hill' },
+      '1st Hunt':  { emoji: '🦊', colorClass: 'color-hunt' },
+      '2nd East':  { emoji: '🦊', colorClass: 'color-hunt' },
+      '2nd West':  { emoji: '🦊', colorClass: 'color-hunt' },
+      '3rd East':  { emoji: '🦊', colorClass: 'color-hunt' },
+      '3rd West':  { emoji: '🦊', colorClass: 'color-hunt' },
+      '4th East':  { emoji: '🦊', colorClass: 'color-hunt' },
+      '4th West':  { emoji: '🦊', colorClass: 'color-hunt' },
+      '1st Beall': { emoji: '🐝', colorClass: 'color-beall' },
+      '2nd Beall': { emoji: '🐝', colorClass: 'color-beall' },
+      '3rd Beall': { emoji: '🐝', colorClass: 'color-beall' },
+      '2nd Bryan': { emoji: '⚡', colorClass: 'color-bryan' },
+      '3rd Bryan': { emoji: '⚡', colorClass: 'color-bryan' },
+      '4th Bryan': { emoji: '⚡', colorClass: 'color-bryan' },
+      'Mod 1':     { emoji: '🏠', colorClass: 'color-mod' },
+      'Mod 2':     { emoji: '🏠', colorClass: 'color-mod' },
+      'Royal':     { emoji: '👑', colorClass: 'color-royal' }
     };
 
+    // Normalize free-text dorm entries to one of the 18 hall names
     function parseHall(s) {
       if (!s) return 'Other';
-      s = s.toLowerCase().trim();
+      const raw = s.trim();
 
-      // Exact hall name matches
-      if (s.includes('hill')) return 'Hill';
-      if (s.includes('hunt')) return 'Hunt';
-      if (s.includes('bryan')) return 'Bryan';
-      if (s.includes('beall')) return 'Beall';
-      if (s.includes('mod')) return 'Mod';
-      if (s.includes('royal')) return 'Royal';
+      // Direct match against known hall names (case-insensitive)
+      for (const hallName of Object.keys(HALL_CONFIG)) {
+        if (raw.toLowerCase() === hallName.toLowerCase()) return hallName;
+      }
 
-      // Hunt floors: "1st Hunt", "2nd East", "2nd West", "3rd East", "3rd West", "4th East", "4th West"
-      if (/\b(east|west)\b/.test(s)) return 'Hunt';
-      if (/\b(1st|2nd|3rd|4th|first|second|third|fourth)\s*(east|west|hunt)\b/.test(s)) return 'Hunt';
-      if (/\b[1-4]\s*(w|e)\b/.test(s)) return 'Hunt';
+      // Fuzzy matching for older free-text entries
+      const lo = raw.toLowerCase();
+      if (lo.includes('royal')) return 'Royal';
+      if (lo.includes('mod') && lo.includes('2')) return 'Mod 2';
+      if (lo.includes('mod') && lo.includes('1')) return 'Mod 1';
+      if (lo.includes('mod')) return 'Mod 1';
+      if (lo.includes('1st hill') || (lo.includes('hill') && lo.includes('1'))) return '1st Hill';
+      if (lo.includes('2nd hill') || (lo.includes('hill') && lo.includes('2'))) return '2nd Hill';
+      if (lo.includes('hill')) return '1st Hill';
+      if (lo.includes('1st beall') || (lo.includes('beall') && lo.includes('1'))) return '1st Beall';
+      if (lo.includes('2nd beall') || (lo.includes('beall') && lo.includes('2'))) return '2nd Beall';
+      if (lo.includes('3rd beall') || (lo.includes('beall') && lo.includes('3'))) return '3rd Beall';
+      if (lo.includes('beall')) return '1st Beall';
+      if (lo.includes('2nd bryan') || (lo.includes('bryan') && lo.includes('2'))) return '2nd Bryan';
+      if (lo.includes('3rd bryan') || (lo.includes('bryan') && lo.includes('3'))) return '3rd Bryan';
+      if (lo.includes('4th bryan') || (lo.includes('bryan') && lo.includes('4'))) return '4th Bryan';
+      if (lo.includes('bryan')) return '2nd Bryan';
+      if (lo.includes('1st hunt')) return '1st Hunt';
+      if (lo.includes('hunt')) return '1st Hunt';
+      if (lo.includes('4th west') || lo.includes('4th w') || lo.includes('4w')) return '4th West';
+      if (lo.includes('4th east') || lo.includes('4th e') || lo.includes('4e')) return '4th East';
+      if (lo.includes('3rd west') || lo.includes('3rd w') || lo.includes('3w')) return '3rd West';
+      if (lo.includes('3rd east') || lo.includes('3rd e') || lo.includes('3e')) return '3rd East';
+      if (lo.includes('2nd west') || lo.includes('2nd w') || lo.includes('2w')) return '2nd West';
+      if (lo.includes('2nd east') || lo.includes('2nd e') || lo.includes('2e')) return '2nd East';
+      if (/\b(east|west)\b/.test(lo)) return '2nd East';
+      if (/fourth\s*west/.test(lo)) return '4th West';
 
       return 'Other';
     }
@@ -548,7 +582,6 @@
           const rows = response.table.rows;
           const hallCounts = {};
           Object.keys(HALL_CONFIG).forEach(h => hallCounts[h] = 0);
-          hallCounts['Other'] = 0;
           let totalPledges = 0;
 
           for (let i = 0; i < rows.length; i++) {
@@ -558,7 +591,11 @@
             totalPledges++;
             const dormRoom = cells[6] ? String(cells[6].v) : '';
             const hall = parseHall(dormRoom);
-            hallCounts[hall] = (hallCounts[hall] || 0) + 1;
+            if (hall in hallCounts) {
+              hallCounts[hall]++;
+            } else {
+              hallCounts[hall] = (hallCounts[hall] || 0) + 1;
+            }
           }
 
           return { totalPledges, hallCounts };
