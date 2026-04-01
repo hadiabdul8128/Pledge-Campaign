@@ -299,6 +299,81 @@
 
     .loading-text { text-align: center; color: var(--text-muted); padding: 2rem 0; }
     .updated-at { text-align: center; color: var(--text-muted); font-size: 0.75rem; margin-top: 1.5rem; opacity: 0.6; }
+
+    /* ===== FOUNDATION / ABOUT TAB ===== */
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .info-card .info-icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-card h2 {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+      color: var(--text);
+    }
+
+    .info-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+
+    .info-card ul {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.8;
+      padding-left: 1.25rem;
+      margin-top: 0.5rem;
+    }
+
+    .info-card ul li strong { color: var(--text); }
+
+    .link-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-top: 0.5rem;
+    }
+
+    .link-list a {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.6rem 1rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: var(--unicorn-blue);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .link-list a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--unicorn-blue);
+      transform: translateX(4px);
+    }
+
+    .info-footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 0.9rem;
+      margin: 1.5rem 0 0.5rem;
+      opacity: 0.7;
+    }
   </style>
 </head>
 <body>
@@ -312,6 +387,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="tracker">Pledge Tracker</button>
       <button class="tab-btn" data-tab="halls">Hall Competition</button>
+      <button class="tab-btn" data-tab="foundation">About</button>
     </div>
 
     <!-- ===== TAB 1: Pledge Tracker ===== -->
@@ -366,6 +442,72 @@
       </div>
 
       <div class="updated-at" id="updatedAt"></div>
+    </div>
+
+    <!-- ===== TAB 3: About / Foundation ===== -->
+    <div class="tab-content" id="tab-foundation">
+      <h1>The Senior Pledge</h1>
+      <p class="subtitle">What it is, why it matters, and how you can help</p>
+
+      <div class="info-card">
+        <div class="info-icon">🦄</div>
+        <h2>What is the Senior Pledge?</h2>
+        <p>As we wrap up our final semester and reflect on the opportunities we've had as Unicorns, the Senior Pledge is our way of giving back to NCSSM. By pledging, you commit to:</p>
+        <ul>
+          <li><strong>Stay connected</strong> through the NCSSM Alumni Network</li>
+          <li><strong>Promote NCSSM</strong> to prospective students</li>
+          <li><strong>Donate $5/year</strong> for 5 years after graduation</li>
+        </ul>
+      </div>
+
+      <div class="info-card">
+        <div class="info-icon">🎓</div>
+        <h2>The '26 Club</h2>
+        <p>Every senior who makes the pledge becomes a member of the <strong>'26 Club</strong> and receives a custom NCSSM-Durham Class of 2026 vinyl laptop sticker. Members are also honored on NCSSM's website.</p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-icon">🍦</div>
+        <h2>90 Pledges — Ice Cream Social</h2>
+        <p>If <strong>90 seniors</strong> (25% of our class) make the pledge, we celebrate with a class ice cream social and turn <strong>Chancellor Roberts into a human sundae!</strong></p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-icon">💰</div>
+        <h2>180 Pledges — $5,000 Challenge Gift</h2>
+        <p>If <strong>180 seniors</strong> (50% of our class) make the pledge, we unlock a <strong>$5,000 Senior Pledge Challenge Gift</strong> to fund the need area of our choice.</p>
+      </div>
+
+      <div class="info-card">
+        <div class="info-icon">❤️</div>
+        <h2>Where Does It Go?</h2>
+        <p>When you pledge, you choose which area of need you'd like the Challenge Gift to support:</p>
+        <ul>
+          <li>Academic Counseling</li>
+          <li>Sports and Academic Competitions</li>
+          <li>J-Term Travel</li>
+          <li>Mental Health Counseling</li>
+        </ul>
+      </div>
+
+      <div class="info-card">
+        <div class="info-icon">🔗</div>
+        <h2>Learn More</h2>
+        <div class="link-list">
+          <a href="https://www.ncssm.edu/donate/ways-to-give/senior-pledge-durham" target="_blank" rel="noopener">Senior Pledge — NCSSM</a>
+          <a href="https://www.ncssm.edu/donate/ways-to-give/senior-pledge-durham/honor-roll" target="_blank" rel="noopener">'26 Club Honor Roll</a>
+          <a href="https://foundation.ncssm.edu/" target="_blank" rel="noopener">NCSSM Foundation</a>
+          <a href="https://www.ncssm.edu/donate/ways-to-give" target="_blank" rel="noopener">Ways to Give</a>
+        </div>
+      </div>
+
+      <div class="info-footer">
+        <p>— Your Class of 2026 Foundation Attachés</p>
+      </div>
+
+      <div class="cta">
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdbDH6ui0qXGWQLOB2O3iLr3gJm_G0T0NqV_Pk5EHKrMdHUtA/viewform" target="_blank" rel="noopener">Make Your Pledge →</a>
+      </div>
     </div>
   </div>
 
