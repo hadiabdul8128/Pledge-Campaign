@@ -893,15 +893,28 @@
       return null;
     }
 
-    // Building configs for the mountain race (grouped from individual halls)
-    const BUILDING_CONFIG = {
-      'Hill':  { avatar: '🏔️', color: '#ff6b9d', halls: ['1st Hill', '2nd Hill'] },
-      'Hunt':  { avatar: '🦊', color: '#4d9fff', halls: ['1st Hunt', '2nd East', '2nd West', '3rd East', '3rd West', '4th East', '4th West'] },
-      'Bryan': { avatar: '⚡', color: '#c44dff', halls: ['2nd Bryan', '3rd Bryan', '4th Bryan'] },
-      'Beall': { avatar: '🐝', color: '#ffd93d', halls: ['1st Beall', '2nd Beall', '3rd Beall'] },
-      'Mod':   { avatar: '🏠', color: '#00e5cc', halls: ['Mod 1', 'Mod 2'] },
-      'Royal': { avatar: '👑', color: '#e8a0ff', halls: ['Royal'] }
-    };
+    // Color mapping for each hall based on its building
+    function getHallColor(hallName) {
+      const lo = hallName.toLowerCase();
+      if (lo.includes('hill')) return '#ff6b9d';
+      if (lo.includes('hunt') || lo.includes('east') || lo.includes('west')) return '#4d9fff';
+      if (lo.includes('bryan')) return '#c44dff';
+      if (lo.includes('beall')) return '#ffd93d';
+      if (lo.includes('mod')) return '#00e5cc';
+      if (lo.includes('royal')) return '#e8a0ff';
+      return '#888';
+    }
+
+    function getHallAvatar(hallName) {
+      const lo = hallName.toLowerCase();
+      if (lo.includes('hill')) return '🏔️';
+      if (lo.includes('hunt') || lo.includes('east') || lo.includes('west')) return '🦊';
+      if (lo.includes('bryan')) return '⚡';
+      if (lo.includes('beall')) return '🐝';
+      if (lo.includes('mod')) return '🏠';
+      if (lo.includes('royal')) return '👑';
+      return '🏢';
+    }
 
     function renderMountainRace(hallCounts, totalPledges, unmatched) {
       const lanesEl = document.getElementById('climberLanes');
@@ -911,45 +924,40 @@
 
       totalEl.textContent = totalPledges;
 
-      // Aggregate per building
-      const buildingCounts = {};
-      for (const [bName, bConf] of Object.entries(BUILDING_CONFIG)) {
-        buildingCounts[bName] = bConf.halls.reduce((sum, h) => sum + (hallCounts[h] || 0), 0);
-      }
+      // Sort all individual halls by count, take top 5 for the mountain
+      const sorted = Object.entries(hallCounts)
+        .filter(([, c]) => c > 0)
+        .sort((a, b) => b[1] - a[1]);
 
-      const maxCount = Math.max(1, ...Object.values(buildingCounts));
-      const sorted = Object.entries(buildingCounts).sort((a, b) => b[1] - a[1]);
-      const leaderName = sorted[0][0];
+      const top5 = sorted.slice(0, 5);
+      const maxCount = top5.length > 0 ? top5[0][1] : 1;
+      const leaderName = top5.length > 0 ? top5[0][0] : '';
 
-      // Render climber lanes
+      // Render top 5 climber lanes
       let lanesHtml = '';
-      for (const [bName, count] of sorted) {
-        const conf = BUILDING_CONFIG[bName];
+      for (const [hallName, count] of top5) {
+        const color = getHallColor(hallName);
+        const avatar = getHallAvatar(hallName);
         const pct = Math.min(95, Math.max(2, (count / maxCount) * 90));
-        const isLeader = bName === leaderName && count > 0;
+        const isLeader = hallName === leaderName;
         const delay = Math.random() * 0.5;
 
         lanesHtml += `
           <div class="climber-lane">
-            <div class="climber-trail" style="height: ${pct}%; background: ${conf.color};"></div>
+            <div class="climber-trail" style="height: ${pct}%; background: ${color};"></div>
             <div class="climber ${isLeader ? 'leader' : ''}" style="bottom: ${pct}%;">
-              <div class="climber-badge" style="background: ${conf.color};">${count}</div>
-              <div class="climber-avatar" style="animation-delay: ${delay}s;">${conf.avatar}</div>
-              <div class="climber-label">${bName}</div>
+              <div class="climber-badge" style="background: ${color};">${count}</div>
+              <div class="climber-avatar" style="animation-delay: ${delay}s;">${avatar}</div>
+              <div class="climber-label">${hallName}</div>
             </div>
           </div>`;
       }
       lanesEl.innerHTML = lanesHtml;
 
-      // Render detailed breakdown grid
+      // Render full breakdown grid (all halls with pledges + other)
       let breakdownHtml = '';
-      const allHalls = Object.entries(hallCounts)
-        .filter(([, c]) => c > 0)
-        .sort((a, b) => b[1] - a[1]);
-
-      for (const [hName, count] of allHalls) {
-        const bName = Object.entries(BUILDING_CONFIG).find(([, c]) => c.halls.includes(hName));
-        const color = bName ? bName[1].color : '#888';
+      for (const [hName, count] of sorted) {
+        const color = getHallColor(hName);
         breakdownHtml += `
           <div class="breakdown-item">
             <div class="breakdown-dot" style="background: ${color};"></div>
