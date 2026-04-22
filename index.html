@@ -829,7 +829,7 @@
       '4th Bryan': { emoji: '⚡', colorClass: 'color-bryan' },
       'Mod 1':     { emoji: '🏠', colorClass: 'color-mod' },
       'Mod 2':     { emoji: '🏠', colorClass: 'color-mod' },
-      'Royal':     { emoji: '👑', colorClass: 'color-royal' }
+      'Royall':    { emoji: '👑', colorClass: 'color-royal' }
     };
 
     // Normalize dorm entries to one of the 18 hall names
@@ -852,8 +852,8 @@
       if (/2nd\s*west|second\s*west|2\s*w/.test(lo)) return '2nd West';
       if (/2nd\s*east|second\s*east|2\s*e/.test(lo)) return '2nd East';
 
-      // 3) Royal
-      if (lo.includes('royal')) return 'Royal';
+      // 3) Royall
+      if (lo.includes('royal')) return 'Royall';
 
       // 4) Mod
       if (lo.includes('mod') || lo.includes('modular')) {
