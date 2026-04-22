@@ -814,7 +814,7 @@
     const HALL_CONFIG = {
       '1st Hill':  { emoji: '🏔️', colorClass: 'color-hill' },
       '2nd Hill':  { emoji: '🏔️', colorClass: 'color-hill' },
-      '1st Hunt':  { emoji: '🦊', colorClass: 'color-hunt' },
+      '1st Hunt/Annex': { emoji: '🦊', colorClass: 'color-hunt' },
       '2nd East':  { emoji: '🦊', colorClass: 'color-hunt' },
       '2nd West':  { emoji: '🦊', colorClass: 'color-hunt' },
       '3rd East':  { emoji: '🦊', colorClass: 'color-hunt' },
@@ -881,8 +881,9 @@
         return '2nd Bryan';
       }
 
-      // 8) Hunt
-      if (lo.includes('hunt') || lo.includes('1st hunt')) return '1st Hunt';
+      // 8) Hunt / Annex
+      if (lo.includes('annex')) return '1st Hunt/Annex';
+      if (lo.includes('hunt') || lo.includes('1st hunt')) return '1st Hunt/Annex';
 
       // 9) Generic east/west without number
       if (/east/.test(lo)) return '2nd East';
@@ -897,7 +898,7 @@
     function getHallColor(hallName) {
       const lo = hallName.toLowerCase();
       if (lo.includes('hill')) return '#ff6b9d';
-      if (lo.includes('hunt') || lo.includes('east') || lo.includes('west')) return '#4d9fff';
+      if (lo.includes('hunt') || lo.includes('annex') || lo.includes('east') || lo.includes('west')) return '#4d9fff';
       if (lo.includes('bryan')) return '#c44dff';
       if (lo.includes('beall')) return '#ffd93d';
       if (lo.includes('mod')) return '#00e5cc';
@@ -908,7 +909,7 @@
     function getHallAvatar(hallName) {
       const lo = hallName.toLowerCase();
       if (lo.includes('hill')) return '🏔️';
-      if (lo.includes('hunt') || lo.includes('east') || lo.includes('west')) return '🦊';
+      if (lo.includes('hunt') || lo.includes('annex') || lo.includes('east') || lo.includes('west')) return '🦊';
       if (lo.includes('bryan')) return '⚡';
       if (lo.includes('beall')) return '🐝';
       if (lo.includes('mod')) return '🏠';
